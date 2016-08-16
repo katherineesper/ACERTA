@@ -1,0 +1,161 @@
+#! /bin/csh
+
+
+# This is the script to create preprocessing scripts for the 
+# Nback paradigm
+
+
+
+set subjs = (003)
+#set subjs = (001 002 003 004 005 006 007 008 009)
+
+
+# 25/08/2015 - Removed from the script:
+#	-align_opts_aea 								\
+#		-skullstrip_opts 							\
+#		-no_use_edge								\
+#		-shrink_fac_bot_lim 0.8 					\
+#		-volreg_tlrc_warp							\		
+		
+# changed the template to the haskins brain template 
+
+set template = HaskinsPeds_NL_template1.0+tlrc
+
+
+set script_folder = `pwd`
+set run = Nback
+set study = RWM
+set visit = visit2
+
+
+# Get out of the SCRIPTS folder
+cd ..
+
+set base_folder = `pwd`
+
+foreach subj (${subjs})
+
+
+cd ${base_folder}
+cd ${study}${subj}
+cd ${visit}
+
+
+afni_proc.py \
+	-subj_id ${study}${subj}                        \
+	-script proc.${study}${subj}.${run}.tcsh 		\
+	-out_dir PROC.${run} 							\
+	-dsets ${run}/${study}${subj}.${run}.nii.gz		\
+	-copy_anat ANAT/${study}${subj}.ANAT.nii.gz		\
+ 	-do_block despike align tlrc  					\
+	-tcat_remove_first_trs 3                        \
+	-tshift_opts_ts -tpattern alt+z					\
+	-volreg_align_to first							\
+	-volreg_align_e2a								\
+	-volreg_tlrc_warp				\
+	-tlrc_base ${template} 				\
+	-tlrc_NL_warp						\
+	-blur_filter -1blur_fwhm						\
+	-blur_size 6 									\
+   	-regress_stim_times 							\
+   	${script_folder}/timing/Nback/N_0.1D 			\
+   	${script_folder}/timing/Nback/N_1.1D 			\
+   	${script_folder}/timing/Nback/N_2.1D 			\
+   	${script_folder}/timing/Nback/N_3.1D 			\
+  	${script_folder}/timing/Nback/key.1D 			\
+  	   	-regress_stim_labels N_0 N_1 N_2 N_3 key   \
+ 	-regress_basis_multi 'BLOCK(1.0,1)' 'BLOCK(1.0,1)' 'BLOCK(1.0,1)' 'BLOCK(1.0,1)' 'BLOCK(3.0,1)' 	\
+		-regress_censor_outliers 0.15              \
+		-regress_opts_3dD						\
+		-num_glt 3 						\
+ 			-gltsym 'SYM: +N_3 -N_0 ' 			\
+	 		-glt_label 1 N_3_vs_N_0      	\
+	 		-gltsym 'SYM: +N_2 -N_0 ' 			\
+	 		-glt_label 2 N_2_vs_N_0      	\
+	 		-gltsym 'SYM: +N_1 -N_0 ' 			\
+	 		-glt_label 3 N_1_vs_N_0      	\
+			-jobs 6										\
+		-local_times 								\
+        -regress_est_blur_epits						\
+	    -regress_est_blur_errts						\
+		-regress_apply_mot_types demean				\
+		-regress_run_clustsim yes 					\
+		-execute 
+		
+		
+end
+	
+
+
+exit
+
+
+# removed
+	-gltsym 'SYM: +N_0 -Baseline'		\
+		-glt_label 1 N_0_vs_Baseline		\
+		-gltsym 'SYM: +N_1 -Baseline'		\
+		-glt_label 2 N_1_vs_Baseline		\
+		-gltsym 'SYM: +N_2 -Baseline'		\
+		-glt_label 3 N_2_vs_Baseline		\
+		-gltsym 'SYM: +N_3 -Baseline'		\
+		-glt_label 4 N_3_vs_Baseline		\
+		-gltsym 'SYM: +key -Baseline'		\
+		-glt_label 5 key_vs_Baseline		\
+		-gltsym 'SYM: +0.25*N_0 +0.25*N_1 +0.25*N_2 +0.25*N_3 -Baseline'		\
+		-glt_label 6 All_vs_Baseline		\
+		
+		
+#### old script
+
+#				-num_glt 5 xxx									\
+
+afni_proc.py \
+	-subj_id ${study}${subj}                        \
+	-script proc.${study}${subj}.${run}.tcsh 		\
+	-out_dir PROC.${run} 							\
+	-dsets ${run}/${study}${subj}.${run}.nii.gz	\
+	-copy_anat ANAT/${study}${subj}.ANAT.nii.gz		\
+ 	-do_block despike align tlrc  					\
+	-tcat_remove_first_trs 3                        \
+	-tshift_opts_ts -tpattern alt+z					\
+	-volreg_align_to first							\
+	-volreg_align_e2a								\
+	-align_opts_aea -giant_move 					\
+	-volreg_tlrc_warp								\
+	-align_opts_aea -skullstrip_opts 				\
+		-shrink_fac_bot_lim 0.8 					\
+		-no_pushout									\
+	-tlrc_base MNI_caez_N27+tlrc					\
+        -mask_segment_anat yes						\
+	-blur_filter -1blur_fwhm						\
+	-blur_size 6 									\
+   	-regress_stim_times 							\
+   	${script_folder}/timing/NBACK_Figuras0back.1D 	\
+	${script_folder}/timing/NBACK_Figuras1back.1D 	\
+	${script_folder}/timing/NBACK_Letras0back.1D 	\
+	${script_folder}/timing/NBACK_Letras1back.1D 	\
+	${script_folder}/timing/NBACK_avisos.1D 		\
+	${script_folder}/timing/NBACK_Baseline.1D 		\
+   	-regress_stim_labels Figuras0back Figuras1back Letras0back Letras1back avisos Baseline \
+	-regress_basis_multi						\
+'BLOCK(2.0,1)' 'BLOCK(2.0,1)' 'BLOCK(2.0,1)' 'BLOCK(2.0,1)'	'BLOCK(5.0,1)'	'BLOCK(10.0,1)'	\
+		-regress_opts_3dD							\
+			-gltsym 'SYM: +Figuras0back -Baseline'		\
+ 			-glt_label 1 Figuras0back_vs_Baseline		\
+			-gltsym 'SYM: +Figuras1back -Baseline'		\
+ 			-glt_label 2 Figuras1back_vs_Baseline		\
+			-gltsym 'SYM: +Letras0back -Baseline'	\
+ 			-glt_label 3 Letras0back_vs_Baseline		\
+			-gltsym 'SYM: +Letras1back -Baseline'		\
+ 			-glt_label 4 Letras1back_vs_Baseline		\
+		-jobs 6										\
+		-local_times 								\
+        -regress_est_blur_epits						\
+	    -regress_est_blur_errts						\
+		-regress_apply_mot_types demean				\
+		-regress_run_clustsim yes
+
+exit
+
+
+
